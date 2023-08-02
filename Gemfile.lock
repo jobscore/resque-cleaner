@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    resque-cleaner (0.4.1)
+    resque-cleaner (0.5)
       resque
 
 GEM

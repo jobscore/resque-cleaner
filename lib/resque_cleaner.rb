@@ -52,7 +52,7 @@ module Resque
       def stats_by_class(&block)
         jobs, stats = select(&block), {}
         jobs.each do |job|
-          klass = job["payload"] && job["payload"]["class"] ? job["payload"]["class"] : "UNKNOWN"
+          klass = job.klass_name
           stats[klass] ||= 0
           stats[klass] += 1
         end
@@ -153,7 +153,7 @@ module Resque
         c
       end
 
-      # Exntends job(Hash instance) with some helper methods.
+      # Extends job(Hash instance) with some helper methods.
       module FailedJobEx
         # Returns true if the job has been already retried. Otherwise returns
         # false.
@@ -180,11 +180,7 @@ module Resque
 
         # Returns true if the class of the job matches. Otherwise returns false.
         def klass?(klass_or_name)
-          if self["payload"] && self["payload"]["class"]
-            self["payload"]["class"] == klass_or_name.to_s
-          else
-            klass_or_name=="UNKNOWN"
-          end
+          klass_name == klass_or_name.to_s
         end
 
         # Returns true if the exception raised by the failed job matches. Otherwise returns false.
@@ -195,6 +191,12 @@ module Resque
         # Returns true if the queue of the job matches. Otherwise returns false.
         def queue?(queue)
           self["queue"] == queue.to_s
+        end
+
+        def klass_name
+          @klass_name ||= (self.dig("payload", "args", 0).is_a?(Hash) && self.dig("payload", "args", 0, "job_class")) ||
+                          self.dig("payload", "class") ||
+                          "UNKNOWN"
         end
       end
 

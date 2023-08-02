@@ -98,7 +98,8 @@ module ResqueCleaner
           end
 
           def show_job_args(args)
-            Array(args).map { |a| a.inspect }.join("\n")
+            arguments = (args[0].is_a?(Hash) && args.dig(0, "arguments")) || args
+            Array(arguments).map { |a| a.inspect }.join("\n")
           end
 
           def text_filter(id, name, value)
@@ -118,7 +119,7 @@ module ResqueCleaner
           @total = Hash.new(0)
           @jobs.each do |job|
             payload = job["payload"] || {}
-            klass = payload["class"] || 'UNKNOWN'
+            klass = job.klass_name
             exception = job["exception"] || 'UNKNOWN'
             failed_at = Time.parse job["failed_at"]
             @stats[:klass][klass] ||= Hash.new(0)
@@ -230,7 +231,7 @@ module ResqueCleaner
         f: @from,
         t: @to,
         regex: @regex
-      }.map {|key,value| "#{key}=#{URI.encode(value.to_s)}"}.join("&")
+      }.map {|key,value| "#{key}=#{CGI.escape(value.to_s)}"}.join("&")
 
       @list_url = "cleaner_list?#{params}"
       @dump_url = "cleaner_dump?#{params}"
